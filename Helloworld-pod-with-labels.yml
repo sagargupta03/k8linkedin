@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: helloworld
+  labels:
+   env: Production
+   author: Sagar
+   application_type: ui
+   release-version: "1.0"		
+spec:
+  containers:
+  - name: helloworld
+    image: karthequian/helloworld:latest
+
