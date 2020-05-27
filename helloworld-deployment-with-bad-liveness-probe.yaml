@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: helloworld-deployment-with-bad-liveness-probe
+spec:
+   selector:
+     matchLabels:
+      app: helloworld
+   replicas: 1 #tells deployment to run 1 pods matching the template
+   template: #create pods using pod definition in this template
+    metadata:
+     labels:
+      app: helloworld
+    spec:
+     containers:
+     - name: helloworld
+       image: karthequian/helloworld:latest
+       ports:
+       - containerPort: 80
+       livenessProbe: #periodic check to make sure when container is healthy.
+        #length of time to wait before checking liveness
+        #after pod startup, before applying health checking
+        initialDelaySeconds: 10
+        #how often (in seconds ) to perform the probe.
+        periodSeconds: 5
+        #amount of time to wait before timing out
+        timeoutSeconds: 1
+        #Kubernetes will try failureThreshhold times before giving up and restarting the pod
+        failureThreshold: 2 
+        #Probe for http
+        httpGet:
+         #path to Probe
+         path: /
+         #Port to probe
+         port: 90
