@@ -1,0 +1,103 @@
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: zookeeper-svc
+  labels:
+    app: zk
+spec:
+  ports:
+  - port: 2181
+    name: client
+  selector:
+    app: zk
+---
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name: zookeeper-SFS
+spec:
+  serviceName: zookeeper-svc
+  replicas: 1
+  podManagementPolicy: Parallel
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: zk   
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoreDuringExecution:
+          - labelSelector:
+              matchExpressions:
+                - key: "app"
+                  operator: In
+                  values:
+                  - none
+            topologykey: "kubernetes.io/hostname"
+     containers:
+     - name: kubernetes-zookeeper
+       imagePullPolicy: Always
+       image: "gcr.io/google_containers/kubernetes-zookeeper:1.0-3.4.10"
+       resources:
+         requests:
+           memory: "500Mi"
+           cpu: "0.5"
+       ports:
+       - containerPort: 2181
+         name: client
+       - containerPort: 2888
+         name: server
+       - containerPort: 3888
+         name: leader-election
+       command:
+       - sh
+       - -c
+       - "start-zookeeper \
+         --servers=1 \
+         --data_dir=/var/lib/zookeeper/data \
+         --data_log_dir=/var/lib/zookeeper/data/log \
+         --conf_dir=/opt/zookeeper/conf \
+         --client_port=2181 \
+         --election_port=3888 \
+         --server_port=2888 \
+         --tick_time=2000 \
+         --init_limit=10 \
+         --sync_limit=5 \
+         --heap=512M \
+         --max_client_cnxns=60 \
+         --snap_retain_count=3 \
+         --purge_inetrval=12 \
+         --max_session_timeout=40000 \
+         --min_session_timout=4000 \
+         --log_level=INFO"
+       readinessProbe: #know when a container is ready to start accepting traffic.
+        #length of time to wait for a pod to initialize
+        #after pod startup, before applying health checking
+        exec:
+         command:
+         - sh
+         - -c
+         - "zookeeper-ready 2181"
+        initialDelaySeconds: 10
+        #amount of time to wait before timing out
+        timeoutSeconds: 5
+      
+       livenessProbe: #periodic check to make sure when container is healthy.
+        #length of time to wait before checking liveness
+        #after pod startup, before applying health checking
+        exec:
+          command:
+          -sh 
+          - -c
+          - "zookeeper-ready 2181" 
+        initialDelaySeconds: 10
+        #amount of time to wait before timing out
+        timeoutSeconds: 5
+      volumenMounts:
+      - name: datadir
+        mountPath: /var/lib/zookeeper    
+
+
