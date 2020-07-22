@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+# extension/v1beta1
+#apiVersion: apps/v1beta1 # done for K8S version > 1.16
+kind: Deployment
+metadata:
+  name: logreader-dynamic
+spec:
+  selector:
+    matchLabels:
+      app: logreader-dynamic
+  replicas: 1 # deployment runs 1 pods matching the template
+  template: # create pods using pod definition in this template
+    metadata:
+      labels:
+        app: logreader-dynamic
+    spec:
+      containers:
+      - name: logreader
+        image: karthequian/reader:latest
+        env:
+        - name: log_level
+          valueFrom:
+            configMapKeyRef:
+              name: logger #Read from a configmap called log-level
+              key: log_level #Read the key called log_level
+        

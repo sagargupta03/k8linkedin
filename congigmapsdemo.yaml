@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+# extension/v1beta1
+#apiVersion: apps/v1beta1 # done for K8S version > 1.16
+kind: Deployment
+metadata:
+  name: logreader
+spec:
+  selector:
+    matchLabels:
+      app: logreader
+  replicas: 1 # deployment runs 1 pods matching the template
+  template: # create pods using pod definition in this template
+    metadata:
+      labels:
+        app: logreader
+    spec:
+      containers:
+      - name: logreader
+        image: karthequian/reader:latest
+        env:
+        - name: log_level
+          value: "error"
+        
